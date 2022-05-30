@@ -15,12 +15,31 @@ describe("Wallet balance", () => {
     beforeEach(() => mockNode.start());
     afterEach(() => mockNode.stop());
 
-    it("should be mocked to return a specific value3", async () => {
-        await mockNode.forBalance('0x0000000000000000000000000000000000000000').thenReturn(1000);
+    it("can be mocked to return a specific value for all wallets", async () => {
+        await mockNode.forBalance().thenReturn(1000);
 
         const web3 = new Web3(mockNode.url);
         const walletBalance = await web3.eth.getBalance('0x0000000000000000000000000000000000000000');
 
         expect(walletBalance).to.equal("1000");
     });
+
+    it("can be mocked to return a specific value per wallet", async () => {
+        await mockNode.forBalance('0x0000000000000000000000000000000000000001').thenReturn(1);
+        await mockNode.forBalance('0x0000000000000000000000000000000000000002').thenReturn(2);
+        await mockNode.forBalance('0x0000000000000000000000000000000000000003').thenReturn(3);
+
+        const web3 = new Web3(mockNode.url);
+        const [w3, w2, w1] = await Promise.all([
+            // Reverse order, just to ensure 100% we are mapping results correctly:
+            web3.eth.getBalance('0x0000000000000000000000000000000000000003'),
+            web3.eth.getBalance('0x0000000000000000000000000000000000000002'),
+            web3.eth.getBalance('0x0000000000000000000000000000000000000001')
+        ]);
+
+        expect(w1).to.equal('1');
+        expect(w2).to.equal('2');
+        expect(w3).to.equal('3');
+    });
+
 });

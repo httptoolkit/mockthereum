@@ -13,9 +13,7 @@ export class BalanceRuleBuilder {
         private addRuleCallback: (...rules: Mockttp.RequestRuleData[]) => Promise<Mockttp.MockedEndpoint[]>
     ) {
         if (address) {
-            this.matchers.push(new RpcCallMatcher('eth_getBalance',
-                [address]
-            ));
+            this.matchers.push(new RpcCallMatcher('eth_getBalance', [address]));
         } else {
             this.matchers.push(new RpcCallMatcher('eth_getBalance'));
         }
