@@ -3,10 +3,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as mockttp from 'mockttp';
+import * as Mockttp from 'mockttp';
+import { MockthereumNode } from './mock-node';
 
-export const x = true;
+export function getLocal(options?: Mockttp.MockttpOptions) {
+    return new MockthereumNode(Mockttp.getLocal(options));
+}
 
-export function getAdminServer(options?: mockttp.MockttpAdminServerOptions) {
-    return mockttp.getAdminServer(options);
+export function getRemote(options?: Mockttp.MockttpOptions) {
+    return new MockthereumNode(Mockttp.getRemote(options));
+}
+
+export function getAdminServer(options?: Mockttp.MockttpAdminServerOptions) {
+    return Mockttp.getAdminServer(options);
 }
