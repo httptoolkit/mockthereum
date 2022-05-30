@@ -4,7 +4,7 @@
  */
 
 import * as Mockttp from 'mockttp';
-import { RpcCallMatcher } from '../rpc-matcher';
+import { RpcCallMatcher, RpcResponseHandler } from '../jsonrpc';
 
 export class BalanceRuleBuilder {
 
@@ -26,11 +26,7 @@ export class BalanceRuleBuilder {
     thenReturn(value: number) {
         return this.addRuleCallback({
             matchers: this.matchers,
-            handler: new Mockttp.requestHandlerDefinitions.SimpleHandlerDefinition(200, undefined, JSON.stringify({
-                jsonrpc: "2.0",
-                id: 1,
-                result: `0x${value.toString(16)}`
-            }))
+            handler: new RpcResponseHandler(`0x${value.toString(16)}`)
         });
     }
 

@@ -19,3 +19,19 @@ export class RpcCallMatcher extends Mockttp.matchers.JsonBodyFlexibleMatcher {
     }
 
 }
+
+export class RpcResponseHandler extends Mockttp.requestHandlerDefinitions.CallbackHandlerDefinition {
+
+    constructor(
+        result: string
+    ) {
+        super(async (req) => ({
+            json: {
+                jsonrpc: "2.0",
+                id: (await req.body.getJson() as { id: number }).id,
+                result
+            }
+        }));
+    }
+
+}
