@@ -32,6 +32,14 @@ export class CallRuleBuilder {
         return this;
     }
 
+    withParams(types: Array<string>, params: Array<any>) {
+        this.matchers.push(new Mockttp.matchers.CallbackMatcher(async (req) => {
+            const jsonBody: any = await req.body.getJson();
+            return (jsonBody.params[0].data as string).slice(10) == encodeAbi(types, params).slice(2);
+        }));
+        return this;
+    }
+
     thenReturn(types: string | string[], value: any) {
         if (!Array.isArray(types)) {
             types = [types];
