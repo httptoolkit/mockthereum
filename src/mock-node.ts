@@ -4,6 +4,7 @@
  */
 
 import * as Mockttp from 'mockttp';
+import { CallRuleBuilder } from './call/call-rule-builder';
 import { BalanceRuleBuilder } from './wallet-balance/balance-rule-builder';
 
 export class MockthereumNode {
@@ -24,8 +25,12 @@ export class MockthereumNode {
         return this.mockttpServer.url;
     }
 
-    forBalance(address?: string) {
+    forBalance(address?: `0x${string}`) {
         return new BalanceRuleBuilder(address, this.mockttpServer.addRequestRules);
+    }
+
+    forCall(address?: `0x${string}`) {
+        return new CallRuleBuilder(address, this.mockttpServer.addRequestRules);
     }
 
 }

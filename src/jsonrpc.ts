@@ -9,7 +9,7 @@ export class RpcCallMatcher extends Mockttp.matchers.JsonBodyFlexibleMatcher {
 
     constructor(
         method: string,
-        params: string[] = []
+        params: Array<unknown> = []
     ) {
         super({
             jsonrpc: "2.0",
