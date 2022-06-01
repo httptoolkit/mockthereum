@@ -9,9 +9,16 @@ import { defaultAbiCoder, FunctionFragment } from '@ethersproject/abi';
 export const encodeAbi = defaultAbiCoder.encode.bind(defaultAbiCoder);
 export const decodeAbi = defaultAbiCoder.decode.bind(defaultAbiCoder);
 
-export function encodeFunctionSignature(functionDefinition: string) {
-    const sig = FunctionFragment.from(
+export function parseFunctionSignature(functionDefinition: string) {
+    return FunctionFragment.from(
         functionDefinition.trim().replace(/^function /, '') // Be flexible with input format
-    ).format();
-    return idHash(sig).slice(0, 10);
+    )
+}
+
+export function encodeFunctionSignature(functionDefinition: string | FunctionFragment) {
+    if (!(functionDefinition instanceof FunctionFragment)) {
+        functionDefinition = parseFunctionSignature(functionDefinition);
+    }
+
+    return idHash(functionDefinition.format()).slice(0, 10);
 }
