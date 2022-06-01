@@ -4,7 +4,7 @@
  */
 
 import * as Mockttp from 'mockttp';
-import { encodeAbi } from '../abi';
+import { encodeAbi, encodeFunctionSignature } from '../abi';
 import { RpcCallMatcher, RpcResponseHandler } from '../jsonrpc';
 
 export class CallRuleBuilder {
@@ -23,6 +23,14 @@ export class CallRuleBuilder {
     }
 
     private matchers: Mockttp.matchers.RequestMatcher[] = [];
+
+    forFunction(signature: string) {
+        this.matchers.push(new Mockttp.matchers.CallbackMatcher(async (req) => {
+            const jsonBody: any = await req.body.getJson();
+            return (jsonBody.params[0].data as string).startsWith(encodeFunctionSignature(signature));
+        }));
+        return this;
+    }
 
     thenReturn(types: string | string[], value: any) {
         if (!Array.isArray(types)) {
