@@ -5,7 +5,7 @@
 
 import Web3 from "web3";
 
-import { Mockthereum, expect } from "../test-setup";
+import { Mockthereum, expect, delay } from "../test-setup";
 
 describe("Wallet balance", () => {
 
@@ -40,6 +40,42 @@ describe("Wallet balance", () => {
         expect(w1).to.equal('1');
         expect(w2).to.equal('2');
         expect(w3).to.equal('3');
+    });
+
+    it("can be mocked to return an RPC error", async () => {
+        await mockNode.forBalance().thenError("Mock error");
+
+        const web3 = new Web3(mockNode.url);
+        const result = await web3.eth.getBalance('0x0000000000000000000000000000000000000000').catch(e => e);
+
+        expect(result).to.be.instanceOf(Error);
+        expect(result.message).to.equal(
+            "Returned error: Mock error"
+        );
+    });
+
+    it("can be mocked to close the connection", async () => {
+        await mockNode.forBalance().thenCloseConnection();
+
+        const web3 = new Web3(mockNode.url);
+        const result = await web3.eth.getBalance('0x0000000000000000000000000000000000000000').catch(e => e);
+
+        expect(result).to.be.instanceOf(Error);
+        expect(result.message).to.equal(
+            'Invalid JSON RPC response: ""'
+        );
+    });
+
+    it("can be mocked to timeout", async () => {
+        await mockNode.forBalance().thenTimeout();
+
+        const web3 = new Web3(mockNode.url);
+        const result = await Promise.race([
+            web3.eth.getBalance('0x0000000000000000000000000000000000000000').catch(e => e),
+            delay(500).then(() => 'timeout')
+        ]);
+
+        expect(result).to.equal('timeout');
     });
 
 });

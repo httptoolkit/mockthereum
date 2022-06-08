@@ -4,7 +4,7 @@
  */
 
 import * as Mockttp from 'mockttp';
-import { RpcCallMatcher, RpcResponseHandler } from '../jsonrpc';
+import { RpcCallMatcher, RpcErrorResponseHandler, RpcResponseHandler } from '../jsonrpc';
 
 export class BalanceRuleBuilder {
 
@@ -25,6 +25,27 @@ export class BalanceRuleBuilder {
         return this.addRuleCallback({
             matchers: this.matchers,
             handler: new RpcResponseHandler(`0x${value.toString(16)}`)
+        });
+    }
+
+    thenError(message: string) {
+        return this.addRuleCallback({
+            matchers: this.matchers,
+            handler: new RpcErrorResponseHandler(message)
+        });
+    }
+
+    thenTimeout() {
+        return this.addRuleCallback({
+            matchers: this.matchers,
+            handler: new Mockttp.requestHandlerDefinitions.TimeoutHandlerDefinition()
+        });
+    }
+
+    thenCloseConnection() {
+        return this.addRuleCallback({
+            matchers: this.matchers,
+            handler: new Mockttp.requestHandlerDefinitions.CloseConnectionHandlerDefinition()
         });
     }
 
