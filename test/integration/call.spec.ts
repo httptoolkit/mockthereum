@@ -9,6 +9,9 @@ import { decodeAbi, encodeAbi } from "../../src/abi";
 
 import { Mockthereum, expect } from "../test-setup";
 
+const CONTRACT_ADDRESS = '0x0000000000000000000000000000000000000000';
+const OTHER_ADDRESS = '0x9999999999999999999999999999999999999999';
+
 describe("Contract eth_call()", () => {
 
     const mockNode = Mockthereum.getLocal();
@@ -20,7 +23,7 @@ describe("Contract eth_call()", () => {
     it("should return an error for unmatched contract calls by default", async () => {
         const web3 = new Web3(mockNode.url);
         const result = await web3.eth.call({
-            to: '0x0000000000000000000000000000000000000000',
+            to: CONTRACT_ADDRESS,
             data: '0x73eac5b1' + encodeAbi(['bool', 'string'], [true, 'test']).slice(2)
         }).catch(e => e);
 
@@ -31,12 +34,12 @@ describe("Contract eth_call()", () => {
     });
 
     it("can be matched by 'to' address for direct call()", async () => {
-        await mockNode.forCall('0x0000000000000000000000000000000000000000')
+        await mockNode.forCall(CONTRACT_ADDRESS)
             .thenReturn('string', 'mock result');
 
         const web3 = new Web3(mockNode.url);
-        const matchingResult = await web3.eth.call({ to: '0x0000000000000000000000000000000000000000' }).catch(e => e);
-        const nonMatchingResult = await web3.eth.call({ to: '0x9999999999999999999999999999999999999999' }).catch(e => e);
+        const matchingResult = await web3.eth.call({ to: CONTRACT_ADDRESS }).catch(e => e);
+        const nonMatchingResult = await web3.eth.call({ to: OTHER_ADDRESS }).catch(e => e);
 
         expect(decodeAbi(['string'], matchingResult)).to.deep.equal(["mock result"]);
         expect(nonMatchingResult).to.be.instanceOf(Error);
@@ -49,11 +52,11 @@ describe("Contract eth_call()", () => {
 
         const web3 = new Web3(mockNode.url);
         const matchingResult = await web3.eth.call({
-            to: '0x0000000000000000000000000000000000000000',
+            to: CONTRACT_ADDRESS,
             data: '0x7fddde58' + encodeAbi(['string', 'bool'], ['test', true]).slice(2) // Manually calculated sig hash
         }).catch(e => e);
         const nonMatchingResult = await web3.eth.call({
-            to: '0x0000000000000000000000000000000000000000',
+            to: CONTRACT_ADDRESS,
             data: '0x99999999' + encodeAbi(['string', 'bool'], ['test', true]).slice(2)
         }).catch(e => e);
 
@@ -68,11 +71,11 @@ describe("Contract eth_call()", () => {
 
         const web3 = new Web3(mockNode.url);
         const matchingResult = await web3.eth.call({
-            to: '0x0000000000000000000000000000000000000000',
+            to: CONTRACT_ADDRESS,
             data: '0x7fddde58' + encodeAbi(['string', 'bool'], ['test', true]).slice(2)
         }).catch(e => e);
         const nonMatchingResult = await web3.eth.call({
-            to: '0x0000000000000000000000000000000000000000',
+            to: CONTRACT_ADDRESS,
             data: '0x7fddde58' + encodeAbi(['string', 'bool'], ['other', false]).slice(2)
         }).catch(e => e);
 
@@ -88,15 +91,36 @@ describe("Contract eth_call()", () => {
 
         const web3 = new Web3(mockNode.url);
         const matchingResult = await web3.eth.call({
-            to: '0x0000000000000000000000000000000000000000',
+            to: CONTRACT_ADDRESS,
             data: '0x73eac5b1' + encodeAbi(['bool', 'string'], [true, 'test']).slice(2)
         }).catch(e => e);
         const nonMatchingResult = await web3.eth.call({
-            to: '0x0000000000000000000000000000000000000000',
+            to: CONTRACT_ADDRESS,
             data: '0x7fddde58' + encodeAbi(['bool', 'string'], [false, 'other']).slice(2)
         }).catch(e => e);
 
         expect(decodeAbi(['int256'], matchingResult)[0].toNumber()).to.equal(1234);
+        expect(nonMatchingResult).to.be.instanceOf(Error);
+    });
+
+    it("can mock calls through web3.js contract instances", async () => {
+        await mockNode.forCall()
+            .forFunction("function foobar(bool, string) returns (int256)")
+            .withParams([true, 'test'])
+            .thenReturn([1234]);
+
+        const web3 = new Web3(mockNode.url);
+        const contract = new web3.eth.Contract([{
+            type: 'function',
+            name: 'foobar',
+            inputs: [{ name: 'a', type: 'bool' }, { name: 'b', type: 'string' }],
+            outputs: [{ name: 'result', type: 'int256' }]
+        }], CONTRACT_ADDRESS);
+
+        const matchingResult = await contract.methods.foobar(true, 'test').call().catch((e: any) => e);
+        const nonMatchingResult = await contract.methods.foobar(false, 'other').call().catch((e: any) => e);
+
+        expect(matchingResult).to.equal('1234');
         expect(nonMatchingResult).to.be.instanceOf(Error);
     });
 });
