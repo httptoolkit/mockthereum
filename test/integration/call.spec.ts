@@ -17,6 +17,19 @@ describe("Contract eth_call()", () => {
     beforeEach(() => mockNode.start());
     afterEach(() => mockNode.stop());
 
+    it("should return an error for unmatched contract calls by default", async () => {
+        const web3 = new Web3(mockNode.url);
+        const result = await web3.eth.call({
+            to: '0x0000000000000000000000000000000000000000',
+            data: '0x73eac5b1' + encodeAbi(['bool', 'string'], [true, 'test']).slice(2)
+        }).catch(e => e);
+
+        expect(result).to.be.instanceOf(Error);
+        expect(result.message).to.equal(
+            "Returned error: No Mockthereum rules found matching Ethereum contract call"
+        );
+    });
+
     it("can be matched by 'to' address for direct call()", async () => {
         await mockNode.forCall('0x0000000000000000000000000000000000000000')
             .thenReturn('string', 'mock result');
@@ -26,9 +39,7 @@ describe("Contract eth_call()", () => {
         const nonMatchingResult = await web3.eth.call({ to: '0x9999999999999999999999999999999999999999' }).catch(e => e);
 
         expect(decodeAbi(['string'], matchingResult)).to.deep.equal(["mock result"]);
-
         expect(nonMatchingResult).to.be.instanceOf(Error);
-        expect(nonMatchingResult.message).to.include('Invalid JSON RPC response');
     });
 
     it("can be matched by function signature for direct call()", async () => {
@@ -47,9 +58,7 @@ describe("Contract eth_call()", () => {
         }).catch(e => e);
 
         expect(decodeAbi(['string'], matchingResult)).to.deep.equal(["mock result"]);
-
         expect(nonMatchingResult).to.be.instanceOf(Error);
-        expect(nonMatchingResult.message).to.include('Invalid JSON RPC response');
     });
 
     it("can be matched by function params for direct call()", async () => {
@@ -68,9 +77,7 @@ describe("Contract eth_call()", () => {
         }).catch(e => e);
 
         expect(decodeAbi(['string'], matchingResult)).to.deep.equal(["mock result"]);
-
         expect(nonMatchingResult).to.be.instanceOf(Error);
-        expect(nonMatchingResult.message).to.include('Invalid JSON RPC response');
     });
 
     it("can infer function matching/return types from the signature for direct call()", async () => {
@@ -90,8 +97,6 @@ describe("Contract eth_call()", () => {
         }).catch(e => e);
 
         expect(decodeAbi(['int256'], matchingResult)[0].toNumber()).to.equal(1234);
-
         expect(nonMatchingResult).to.be.instanceOf(Error);
-        expect(nonMatchingResult.message).to.include('Invalid JSON RPC response');
     });
 });
