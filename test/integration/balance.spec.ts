@@ -15,6 +15,13 @@ describe("Wallet balance", () => {
     beforeEach(() => mockNode.start());
     afterEach(() => mockNode.stop());
 
+    it("should return 0 by default", async () => {
+        const web3 = new Web3(mockNode.url);
+        const walletBalance = await web3.eth.getBalance('0x0000000000000000000000000000000000000000');
+
+        expect(walletBalance).to.equal("0");
+    });
+
     it("can be mocked to return a specific value for all wallets", async () => {
         await mockNode.forBalance().thenReturn(1000);
 

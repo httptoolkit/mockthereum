@@ -5,7 +5,7 @@
 
 import * as Mockttp from 'mockttp';
 import { CallRuleBuilder } from './call/call-rule-builder';
-import { RpcCallMatcher, RpcErrorResponseHandler } from './jsonrpc';
+import { RpcCallMatcher, RpcErrorResponseHandler, RpcResponseHandler } from './jsonrpc';
 import { BalanceRuleBuilder } from './wallet-balance/balance-rule-builder';
 
 export class MockthereumNode {
@@ -28,13 +28,20 @@ export class MockthereumNode {
     }
 
     private async addBaseRules() {
-        await this.mockttpServer.addRequestRules({
-            matchers: [new RpcCallMatcher('eth_call')],
-            priority: Mockttp.RulePriority.FALLBACK,
-            handler: new RpcErrorResponseHandler(
-                "No Mockthereum rules found matching Ethereum contract call"
-            )
-        });
+        await Promise.all([
+            this.mockttpServer.addRequestRules({
+                matchers: [new RpcCallMatcher('eth_call')],
+                priority: Mockttp.RulePriority.FALLBACK,
+                handler: new RpcErrorResponseHandler(
+                    "No Mockthereum rules found matching Ethereum contract call"
+                )
+            }),
+            this.mockttpServer.addRequestRules({
+                matchers: [new RpcCallMatcher('eth_getBalance')],
+                priority: Mockttp.RulePriority.FALLBACK,
+                handler: new RpcResponseHandler("0x0")
+            })
+        ]);
     }
 
     forBalance(address?: `0x${string}`) {
