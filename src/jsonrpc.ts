@@ -36,14 +36,20 @@ export class RpcResponseHandler extends Mockttp.requestHandlerDefinitions.Callba
 
 export class RpcErrorResponseHandler extends Mockttp.requestHandlerDefinitions.CallbackHandlerDefinition {
 
-    constructor(message: string) {
+    constructor(message: string, options: {
+        code?: number,
+        name?: string,
+        data?: `0x${string}`
+    } = {}) {
         super(async (req) => ({
             json: {
                 jsonrpc: "2.0",
                 id: (await req.body.getJson() as { id: number }).id,
                 error: {
-                    code: -1,
-                    message
+                    message,
+                    data: options.data ?? '0x',
+                    code: options.code ?? -32099,
+                    name: options.name ?? undefined,
                 }
             }
         }));

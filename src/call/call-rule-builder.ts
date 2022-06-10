@@ -5,7 +5,7 @@
 
 import * as Mockttp from 'mockttp';
 import { encodeAbi, encodeFunctionSignature, parseFunctionSignature } from '../abi';
-import { RpcCallMatcher, RpcResponseHandler } from '../jsonrpc';
+import { RpcCallMatcher, RpcErrorResponseHandler, RpcResponseHandler } from '../jsonrpc';
 
 export class CallRuleBuilder {
 
@@ -89,6 +89,20 @@ export class CallRuleBuilder {
             matchers: this.matchers,
             handler: new RpcResponseHandler(encodeAbi(types, values))
         }).then(r => r[0]);
+    }
+
+    thenRevert(errorMessage: string) {
+        return this.addRuleCallback({
+            matchers: this.matchers,
+            handler: new RpcErrorResponseHandler(
+                `VM Exception while processing transaction: revert ${errorMessage}`, {
+                    name: 'CallError',
+                    data: `0x08c379a0${ // String type prefix
+                        encodeAbi(['string'], [errorMessage]).slice(2)
+                    }`
+                }
+            )
+        });
     }
 
 }

@@ -123,4 +123,16 @@ describe("Contract eth_call()", () => {
         expect(matchingResult).to.equal('1234');
         expect(nonMatchingResult).to.be.instanceOf(Error);
     });
+
+    it("can reject contract calls with a custom error", async () => {
+        await mockNode.forCall().thenRevert("Mock error");
+
+        const web3 = new Web3(mockNode.url);
+        const errorResult = await web3.eth.call({ to: CONTRACT_ADDRESS }).catch(e => e);
+
+        expect(errorResult).to.be.instanceOf(Error);
+        expect(errorResult.message).to.equal(
+            "Returned error: VM Exception while processing transaction: revert Mock error"
+        );
+    });
 });
