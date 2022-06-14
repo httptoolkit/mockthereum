@@ -105,4 +105,18 @@ export class CallRuleBuilder {
         });
     }
 
+    thenTimeout() {
+        return this.addRuleCallback({
+            matchers: this.matchers,
+            handler: new Mockttp.requestHandlerDefinitions.TimeoutHandlerDefinition()
+        });
+    }
+
+    thenCloseConnection() {
+        return this.addRuleCallback({
+            matchers: this.matchers,
+            handler: new Mockttp.requestHandlerDefinitions.CloseConnectionHandlerDefinition()
+        });
+    }
+
 }

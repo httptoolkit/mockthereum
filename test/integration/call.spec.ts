@@ -7,7 +7,7 @@ import Web3 from "web3";
 
 import { decodeAbi, encodeAbi } from "../../src/abi";
 
-import { Mockthereum, expect } from "../test-setup";
+import { Mockthereum, expect, delay } from "../test-setup";
 
 const CONTRACT_ADDRESS = '0x0000000000000000000000000000000000000000';
 const OTHER_ADDRESS = '0x9999999999999999999999999999999999999999';
@@ -134,5 +134,29 @@ describe("Contract eth_call()", () => {
         expect(errorResult.message).to.equal(
             "Returned error: VM Exception while processing transaction: revert Mock error"
         );
+    });
+
+    it("can be mocked to close the connection", async () => {
+        await mockNode.forCall().thenCloseConnection();
+
+        const web3 = new Web3(mockNode.url);
+        const result = await web3.eth.call({ to: CONTRACT_ADDRESS }).catch(e => e);
+
+        expect(result).to.be.instanceOf(Error);
+        expect(result.message).to.equal(
+            'Invalid JSON RPC response: ""'
+        );
+    });
+
+    it("can be mocked to timeout", async () => {
+        await mockNode.forCall().thenTimeout();
+
+        const web3 = new Web3(mockNode.url);
+        const result = await Promise.race([
+            web3.eth.call({ to: CONTRACT_ADDRESS }).catch(e => e),
+            delay(500).then(() => 'timeout')
+        ]);
+
+        expect(result).to.equal('timeout');
     });
 });
