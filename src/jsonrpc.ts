@@ -22,7 +22,7 @@ export class RpcCallMatcher extends Mockttp.matchers.JsonBodyFlexibleMatcher {
 
 export class RpcResponseHandler extends Mockttp.requestHandlerDefinitions.CallbackHandlerDefinition {
 
-    constructor(result: string) {
+    constructor(result: string | null) {
         super(async (req) => ({
             headers: { 'transfer-encoding': 'chunked' },
             json: {

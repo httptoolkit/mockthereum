@@ -47,6 +47,11 @@ export class MockthereumNode {
                 handler: new RpcResponseHandler("0x1")
             }),
             this.mockttpServer.addRequestRules({
+                matchers: [new RpcCallMatcher('eth_getBlockByNumber')],
+                priority: Mockttp.RulePriority.FALLBACK,
+                handler: new RpcResponseHandler(null)
+            }),
+            this.mockttpServer.addRequestRules({
                 matchers: [new RpcCallMatcher('eth_gasPrice')],
                 priority: Mockttp.RulePriority.FALLBACK,
                 handler: new RpcResponseHandler(`0x${(1000).toString(16)}`)
