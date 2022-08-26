@@ -22,9 +22,9 @@ export class RpcCallMatcher extends Mockttp.matchers.JsonBodyFlexibleMatcher {
 
 export class RpcResponseHandler extends Mockttp.requestHandlerDefinitions.CallbackHandlerDefinition {
 
-    constructor(result: string | null) {
+    constructor(result: unknown) {
         super(async (req) => ({
-            headers: { 'transfer-encoding': 'chunked' },
+            headers: { 'transfer-encoding': 'chunked', 'connection': 'keep-alive' },
             json: {
                 jsonrpc: "2.0",
                 id: (await req.body.getJson() as { id: number }).id,
@@ -35,15 +35,17 @@ export class RpcResponseHandler extends Mockttp.requestHandlerDefinitions.Callba
 
 }
 
+export interface RpcErrorProperties {
+    code?: number;
+    name?: string;
+    data?: `0x${string}`;
+}
+
 export class RpcErrorResponseHandler extends Mockttp.requestHandlerDefinitions.CallbackHandlerDefinition {
 
-    constructor(message: string, options: {
-        code?: number,
-        name?: string,
-        data?: `0x${string}`
-    } = {}) {
+    constructor(message: string, options: RpcErrorProperties = {}) {
         super(async (req) => ({
-            headers: { 'transfer-encoding': 'chunked' },
+            headers: { 'transfer-encoding': 'chunked', 'connection': 'keep-alive' },
             json: {
                 jsonrpc: "2.0",
                 id: (await req.body.getJson() as { id: number }).id,
