@@ -4,28 +4,19 @@
  */
 
 import * as Mockttp from 'mockttp';
-import { encodeAbi, encodeFunctionSignature, parseFunctionSignature } from '../abi';
-import { RpcCallMatcher, RpcErrorResponseHandler, RpcResponseHandler } from '../jsonrpc';
 
-export class CallRuleBuilder {
+import { encodeAbi, encodeFunctionSignature, parseFunctionSignature } from './abi';
+import { RpcCallMatcher, RpcErrorResponseHandler, RpcResponseHandler } from './jsonrpc';
+
+class ContractRuleBuilder {
 
     constructor(
-        targetAddress:
-            | undefined // All contracts
-            | `0x${string}`, // A specific to: address
-        private addRuleCallback: (...rules: Mockttp.RequestRuleData[]) => Promise<Mockttp.MockedEndpoint[]>
-    ) {
-        if (targetAddress) {
-            this.matchers.push(new RpcCallMatcher('eth_call', [{ to: targetAddress }]));
-        } else {
-            this.matchers.push(new RpcCallMatcher('eth_call'));
-        }
-    }
-
-    private matchers: Mockttp.matchers.RequestMatcher[] = [];
+        protected addRuleCallback: (...rules: Mockttp.RequestRuleData[]) => Promise<Mockttp.MockedEndpoint[]>,
+        protected matchers: Mockttp.matchers.RequestMatcher[] = []
+    ) {}
 
     private paramTypes: string[] | undefined;
-    private returnTypes: string[] | undefined;
+    protected returnTypes: string[] | undefined;
 
     forFunction(signature: string) {
         const func = parseFunctionSignature(signature);
@@ -64,25 +55,72 @@ export class CallRuleBuilder {
         return this;
     }
 
+    thenTimeout() {
+        return this.addRuleCallback({
+            matchers: this.matchers,
+            handler: new Mockttp.requestHandlerDefinitions.TimeoutHandlerDefinition()
+        });
+    }
+
+    thenCloseConnection() {
+        return this.addRuleCallback({
+            matchers: this.matchers,
+            handler: new Mockttp.requestHandlerDefinitions.CloseConnectionHandlerDefinition()
+        });
+    }
+
+}
+
+export class CallRuleBuilder extends ContractRuleBuilder {
+
+    constructor(
+        targetAddress:
+            | undefined // All contracts
+            | `0x${string}`, // A specific to: address
+        addRuleCallback: (...rules: Mockttp.RequestRuleData[]) => Promise<Mockttp.MockedEndpoint[]>
+    ) {
+        if (targetAddress) {
+            super(addRuleCallback, [new RpcCallMatcher('eth_call', [{
+                to: targetAddress
+            }])]);
+        } else {
+            super(addRuleCallback, [new RpcCallMatcher('eth_call')]);
+        }
+    }
+
     thenReturn(outputType: string, value: unknown): Promise<Mockttp.MockedEndpoint>;
     thenReturn(values: Array<unknown>): Promise<Mockttp.MockedEndpoint>;
+    thenReturn(value: unknown): Promise<Mockttp.MockedEndpoint>;
     thenReturn(outputTypes: Array<string>, values: Array<unknown>): Promise<Mockttp.MockedEndpoint>;
     thenReturn(...args:
         | [string, unknown]
         | [unknown[]]
+        | [unknown]
         | [Array<string>, Array<unknown>]
     ): Promise<Mockttp.MockedEndpoint> {
-        const [types, values] = (args.length === 1)
-                ? [this.returnTypes, args[0]]
-            : !Array.isArray(args[0])
-                ? [[args[0]], [args[1]]]
-            : args as| [Array<string>, Array<unknown>];
+        let types: Array<string>;
+        let values: Array<unknown>;
 
-        if (!types) {
-            throw new Error(
-                "forCall()'s thenReturn() must be called with a outputTypes array as the first argument unless " +
-                "forFunction is called first with a return signature"
-            );
+        if (args.length === 1) {
+            if (!this.returnTypes) {
+                throw new Error(
+                    "thenReturn() must be called with an outputTypes array as the first argument, or " +
+                    "forFunction() must be called first with a return signature"
+                );
+            }
+
+            types = this.returnTypes;
+            if (Array.isArray(args[0])) {
+                values = args[0];
+            } else {
+                values = [args[0]];
+            }
+        } else if (!Array.isArray(args[0])){
+            types = [args[0]];
+            values = [args[1]];
+        } else {
+            types = args[0];
+            values = args[1] as unknown[];
         }
 
         return this.addRuleCallback({
@@ -102,20 +140,6 @@ export class CallRuleBuilder {
                     }`
                 }
             )
-        });
-    }
-
-    thenTimeout() {
-        return this.addRuleCallback({
-            matchers: this.matchers,
-            handler: new Mockttp.requestHandlerDefinitions.TimeoutHandlerDefinition()
-        });
-    }
-
-    thenCloseConnection() {
-        return this.addRuleCallback({
-            matchers: this.matchers,
-            handler: new Mockttp.requestHandlerDefinitions.CloseConnectionHandlerDefinition()
         });
     }
 

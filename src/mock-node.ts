@@ -4,7 +4,7 @@
  */
 
 import * as Mockttp from 'mockttp';
-import { CallRuleBuilder } from './call/call-rule-builder';
+import { CallRuleBuilder } from './contract-rule-builder';
 import { RpcCallMatcher, RpcErrorResponseHandler, RpcResponseHandler } from './jsonrpc';
 import { BalanceRuleBuilder, BlockNumberRuleBuilder, GasPriceRuleBuilder } from './single-value-rule-builders';
 
