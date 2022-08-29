@@ -193,7 +193,7 @@ export class TransactionRuleBuilder extends ContractRuleBuilder {
                     });
 
                     return {
-                        headers: { 'transfer-encoding': 'chunked' },
+                        headers: { 'transfer-encoding': 'chunked', 'connection': 'keep-alive' },
                         json: {
                             jsonrpc: "2.0",
                             id: body.id,
@@ -230,7 +230,7 @@ export class TransactionRuleBuilder extends ContractRuleBuilder {
                     });
 
                     return {
-                        headers: { 'transfer-encoding': 'chunked' },
+                        headers: { 'transfer-encoding': 'chunked', 'connection': 'keep-alive' },
                         json: {
                             jsonrpc: "2.0",
                             id: body.id,
