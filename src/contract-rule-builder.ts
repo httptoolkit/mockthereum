@@ -9,16 +9,24 @@ import { v4 as uuid } from 'uuid';
 import { encodeAbi, encodeFunctionSignature, parseFunctionSignature } from './abi';
 import { RpcCallMatcher, RpcErrorProperties, RpcErrorResponseHandler, RpcResponseHandler } from './jsonrpc';
 import { RawTransactionReceipt } from './mock-node';
+import { MockedContract } from './mocked-contract';
 
 class ContractRuleBuilder {
 
     constructor(
-        protected addRuleCallback: (...rules: Mockttp.RequestRuleData[]) => Promise<Mockttp.MockedEndpoint[]>,
+        private addRuleCallback: (...rules: Mockttp.RequestRuleData[]) => Promise<Mockttp.MockedEndpoint[]>,
         protected matchers: Mockttp.matchers.RequestMatcher[] = []
     ) {}
 
     private paramTypes: string[] | undefined;
     protected returnTypes: string[] | undefined;
+
+    protected async buildRule(
+        handler: Mockttp.requestHandlerDefinitions.RequestHandlerDefinition
+    ): Promise<MockedContract> {
+        const mockedEndpoint = (await this.addRuleCallback({ matchers: this.matchers, handler }))[0];
+        return new MockedContract(mockedEndpoint, this.paramTypes);
+    }
 
     forFunction(signature: string) {
         const func = parseFunctionSignature(signature);
@@ -50,6 +58,10 @@ class ContractRuleBuilder {
             );
         }
 
+        if (types) {
+            this.paramTypes = types;
+        }
+
         this.matchers.push(new Mockttp.matchers.CallbackMatcher(async (req) => {
             const jsonBody: any = await req.body.getJson();
             return (jsonBody.params[0].data as string).slice(10) == encodeAbi(types, params).slice(2);
@@ -58,17 +70,11 @@ class ContractRuleBuilder {
     }
 
     thenTimeout() {
-        return this.addRuleCallback({
-            matchers: this.matchers,
-            handler: new Mockttp.requestHandlerDefinitions.TimeoutHandlerDefinition()
-        });
+        return this.buildRule(new Mockttp.requestHandlerDefinitions.TimeoutHandlerDefinition());
     }
 
     thenCloseConnection() {
-        return this.addRuleCallback({
-            matchers: this.matchers,
-            handler: new Mockttp.requestHandlerDefinitions.CloseConnectionHandlerDefinition()
-        });
+        return this.buildRule(new Mockttp.requestHandlerDefinitions.CloseConnectionHandlerDefinition());
     }
 
 }
@@ -90,16 +96,16 @@ export class CallRuleBuilder extends ContractRuleBuilder {
         }
     }
 
-    thenReturn(outputType: string, value: unknown): Promise<Mockttp.MockedEndpoint>;
-    thenReturn(values: Array<unknown>): Promise<Mockttp.MockedEndpoint>;
-    thenReturn(value: unknown): Promise<Mockttp.MockedEndpoint>;
-    thenReturn(outputTypes: Array<string>, values: Array<unknown>): Promise<Mockttp.MockedEndpoint>;
+    thenReturn(outputType: string, value: unknown): Promise<MockedContract>;
+    thenReturn(values: Array<unknown>): Promise<MockedContract>;
+    thenReturn(value: unknown): Promise<MockedContract>;
+    thenReturn(outputTypes: Array<string>, values: Array<unknown>): Promise<MockedContract>;
     thenReturn(...args:
         | [string, unknown]
         | [unknown[]]
         | [unknown]
         | [Array<string>, Array<unknown>]
-    ): Promise<Mockttp.MockedEndpoint> {
+    ): Promise<MockedContract> {
         let types: Array<string>;
         let values: Array<unknown>;
 
@@ -125,24 +131,18 @@ export class CallRuleBuilder extends ContractRuleBuilder {
             values = args[1] as unknown[];
         }
 
-        return this.addRuleCallback({
-            matchers: this.matchers,
-            handler: new RpcResponseHandler(encodeAbi(types, values))
-        }).then(r => r[0]);
+        return this.buildRule(new RpcResponseHandler(encodeAbi(types, values)));
     }
 
     thenRevert(errorMessage: string) {
-        return this.addRuleCallback({
-            matchers: this.matchers,
-            handler: new RpcErrorResponseHandler(
-                `VM Exception while processing transaction: revert ${errorMessage}`, {
-                    name: 'CallError',
-                    data: `0x08c379a0${ // String type prefix
-                        encodeAbi(['string'], [errorMessage]).slice(2)
-                    }`
-                }
-            )
-        });
+        return this.buildRule(new RpcErrorResponseHandler(
+            `VM Exception while processing transaction: revert ${errorMessage}`, {
+                name: 'CallError',
+                data: `0x08c379a0${ // String type prefix
+                    encodeAbi(['string'], [errorMessage]).slice(2)
+                }`
+            }
+        ));
     }
 
 }
@@ -170,83 +170,74 @@ export class TransactionRuleBuilder extends ContractRuleBuilder {
     private addReceiptCallback: (id: string, receipt: Partial<RawTransactionReceipt>) => Promise<void>;
 
     thenSucceed(receipt: Partial<RawTransactionReceipt> = {}) {
-        return this.addRuleCallback({
-            matchers: this.matchers,
-            handler: new Mockttp.requestHandlerDefinitions.CallbackHandlerDefinition(
-                async (req) => {
-                    // 64 char random hex id:
-                    const transactionId = `0x${uuid().replace(/-/g, '')}${uuid().replace(/-/g, '')}`;
+        return this.buildRule(new Mockttp.requestHandlerDefinitions.CallbackHandlerDefinition(
+            async (req) => {
+                // 64 char random hex id:
+                const transactionId = `0x${uuid().replace(/-/g, '')}${uuid().replace(/-/g, '')}`;
 
-                    const body = await req.body.getJson() as {
-                        id: number;
-                        params: [{
-                            from: string | undefined,
-                            to: string | undefined,
-                        }]
-                    };
+                const body = await req.body.getJson() as {
+                    id: number;
+                    params: [{
+                        from: string | undefined,
+                        to: string | undefined,
+                    }]
+                };
 
-                    await this.addReceiptCallback(transactionId, {
-                        status: '0x1',
-                        from: body.params[0].from,
-                        to: body.params[0].to,
-                        ...receipt
-                    });
+                await this.addReceiptCallback(transactionId, {
+                    status: '0x1',
+                    from: body.params[0].from,
+                    to: body.params[0].to,
+                    ...receipt
+                });
 
-                    return {
-                        headers: { 'transfer-encoding': 'chunked', 'connection': 'keep-alive' },
-                        json: {
-                            jsonrpc: "2.0",
-                            id: body.id,
-                            result: transactionId
-                        }
-                    };
-                }
-            )
-        });
+                return {
+                    headers: { 'transfer-encoding': 'chunked', 'connection': 'keep-alive' },
+                    json: {
+                        jsonrpc: "2.0",
+                        id: body.id,
+                        result: transactionId
+                    }
+                };
+            }
+        ));
     }
 
     thenRevert(receipt: Partial<RawTransactionReceipt> = {}) {
-        return this.addRuleCallback({
-            matchers: this.matchers,
-            handler: new Mockttp.requestHandlerDefinitions.CallbackHandlerDefinition(
-                async (req) => {
-                    // 64 char random hex id:
-                    const transactionId = `0x${uuid().replace(/-/g, '')}${uuid().replace(/-/g, '')}`;
+        return this.buildRule(new Mockttp.requestHandlerDefinitions.CallbackHandlerDefinition(
+            async (req) => {
+                // 64 char random hex id:
+                const transactionId = `0x${uuid().replace(/-/g, '')}${uuid().replace(/-/g, '')}`;
 
-                    const body = await req.body.getJson() as {
-                        id: number;
-                        params: [{
-                            from: string | undefined,
-                            to: string | undefined,
-                        }]
-                    };
+                const body = await req.body.getJson() as {
+                    id: number;
+                    params: [{
+                        from: string | undefined,
+                        to: string | undefined,
+                    }]
+                };
 
-                    await this.addReceiptCallback(transactionId, {
-                        status: '0x',
-                        type: '0x2',
-                        from: body.params[0].from,
-                        to: body.params[0].to,
-                        ...receipt
-                    });
+                await this.addReceiptCallback(transactionId, {
+                    status: '0x',
+                    type: '0x2',
+                    from: body.params[0].from,
+                    to: body.params[0].to,
+                    ...receipt
+                });
 
-                    return {
-                        headers: { 'transfer-encoding': 'chunked', 'connection': 'keep-alive' },
-                        json: {
-                            jsonrpc: "2.0",
-                            id: body.id,
-                            result: transactionId
-                        }
-                    };
-                }
-            )
-        });
+                return {
+                    headers: { 'transfer-encoding': 'chunked', 'connection': 'keep-alive' },
+                    json: {
+                        jsonrpc: "2.0",
+                        id: body.id,
+                        result: transactionId
+                    }
+                };
+            }
+        ));
     }
 
     thenFailImmediately(errorMessage: string, errorProperties: RpcErrorProperties = {}) {
-        return this.addRuleCallback({
-            matchers: this.matchers,
-            handler: new RpcErrorResponseHandler(errorMessage, errorProperties)
-        });
+        return this.buildRule(new RpcErrorResponseHandler(errorMessage, errorProperties));
     }
 
 }
