@@ -68,9 +68,7 @@ describe("Wallet balance", () => {
         const result = await web3.eth.getBalance('0x0000000000000000000000000000000000000000').catch(e => e);
 
         expect(result).to.be.instanceOf(Error);
-        expect(result.message).to.equal(
-            'Invalid JSON RPC response: ""'
-        );
+        expect(result.message).to.include('CONNECTION ERROR');
     });
 
     it("can be mocked to timeout", async () => {

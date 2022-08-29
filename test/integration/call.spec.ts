@@ -143,9 +143,7 @@ describe("Contract eth_call()", () => {
         const result = await web3.eth.call({ to: CONTRACT_ADDRESS }).catch(e => e);
 
         expect(result).to.be.instanceOf(Error);
-        expect(result.message).to.equal(
-            'Invalid JSON RPC response: ""'
-        );
+        expect(result.message).to.include('CONNECTION ERROR');
     });
 
     it("can be mocked to timeout", async () => {

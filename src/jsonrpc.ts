@@ -24,6 +24,7 @@ export class RpcResponseHandler extends Mockttp.requestHandlerDefinitions.Callba
 
     constructor(result: string) {
         super(async (req) => ({
+            headers: { 'transfer-encoding': 'chunked' },
             json: {
                 jsonrpc: "2.0",
                 id: (await req.body.getJson() as { id: number }).id,
@@ -42,6 +43,7 @@ export class RpcErrorResponseHandler extends Mockttp.requestHandlerDefinitions.C
         data?: `0x${string}`
     } = {}) {
         super(async (req) => ({
+            headers: { 'transfer-encoding': 'chunked' },
             json: {
                 jsonrpc: "2.0",
                 id: (await req.body.getJson() as { id: number }).id,
