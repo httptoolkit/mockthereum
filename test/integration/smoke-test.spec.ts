@@ -24,6 +24,7 @@ const JSON_CONTRACT_ABI = [
 
 describe("Smoke test", () => {
 
+    // Create a mock Ethereum node:
     const mockNode = Mockthereum.getLocal();
 
     // Start & stop your mock node to reset state between tests
