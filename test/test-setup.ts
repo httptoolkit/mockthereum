@@ -13,3 +13,8 @@ export {
 
 export const delay = (durationMs: number) =>
     new Promise((resolve) => setTimeout(resolve, durationMs));
+
+const isNode = typeof process === 'object' && process.version;
+export const nodeOnly = (fn: Function) => {
+    if (isNode) fn();
+};

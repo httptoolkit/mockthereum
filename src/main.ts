@@ -4,14 +4,14 @@
  */
 
 import * as Mockttp from 'mockttp';
-import { MockthereumNode } from './mock-node';
+import { MockthereumNode, MockthereumOptions } from './mock-node';
 
-export function getLocal(options?: Mockttp.MockttpOptions) {
-    return new MockthereumNode(Mockttp.getLocal(options));
+export function getLocal(options?: Mockttp.MockttpOptions & MockthereumOptions) {
+    return new MockthereumNode(Mockttp.getLocal(options), options);
 }
 
-export function getRemote(options?: Mockttp.MockttpOptions) {
-    return new MockthereumNode(Mockttp.getRemote(options));
+export function getRemote(options?: Mockttp.MockttpOptions & MockthereumOptions) {
+    return new MockthereumNode(Mockttp.getRemote(options), options);
 }
 
 export function getAdminServer(options?: Mockttp.MockttpAdminServerOptions) {
