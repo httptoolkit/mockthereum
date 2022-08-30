@@ -14,7 +14,7 @@ import { MockedContract } from './mocked-contract';
 class ContractRuleBuilder {
 
     constructor(
-        private addRuleCallback: (...rules: Mockttp.RequestRuleData[]) => Promise<Mockttp.MockedEndpoint[]>,
+        private addRuleCallback: (rule: Mockttp.RequestRuleData) => Promise<Mockttp.MockedEndpoint>,
         protected matchers: Mockttp.matchers.RequestMatcher[] = []
     ) {}
 
@@ -24,7 +24,7 @@ class ContractRuleBuilder {
     protected async buildRule(
         handler: Mockttp.requestHandlerDefinitions.RequestHandlerDefinition
     ): Promise<MockedContract> {
-        const mockedEndpoint = (await this.addRuleCallback({ matchers: this.matchers, handler }))[0];
+        const mockedEndpoint = await this.addRuleCallback({ matchers: this.matchers, handler });
         return new MockedContract(mockedEndpoint, this.paramTypes);
     }
 
@@ -85,7 +85,7 @@ export class CallRuleBuilder extends ContractRuleBuilder {
         targetAddress:
             | undefined // All contracts
             | `0x${string}`, // A specific to: address
-        addRuleCallback: (...rules: Mockttp.RequestRuleData[]) => Promise<Mockttp.MockedEndpoint[]>
+        addRuleCallback: (rule: Mockttp.RequestRuleData) => Promise<Mockttp.MockedEndpoint>
     ) {
         if (targetAddress) {
             super(addRuleCallback, [new RpcCallMatcher('eth_call', [{
@@ -153,7 +153,7 @@ export class TransactionRuleBuilder extends ContractRuleBuilder {
         targetAddress:
             | undefined // All contracts
             | `0x${string}`, // A specific to: address
-        addRuleCallback: (...rules: Mockttp.RequestRuleData[]) => Promise<Mockttp.MockedEndpoint[]>,
+        addRuleCallback: (rule: Mockttp.RequestRuleData) => Promise<Mockttp.MockedEndpoint>,
         addReceiptCallback: (id: string, receipt: Partial<RawTransactionReceipt>) => Promise<void>
     ) {
         if (targetAddress) {

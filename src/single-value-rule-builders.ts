@@ -9,7 +9,7 @@ import { RpcCallMatcher, RpcErrorResponseHandler, RpcResponseHandler } from './j
 class SingleValueRuleBuilder {
 
     constructor(
-        private addRuleCallback: (...rules: Mockttp.RequestRuleData[]) => Promise<Mockttp.MockedEndpoint[]>,
+        private addRuleCallback: (rule: Mockttp.RequestRuleData) => Promise<Mockttp.MockedEndpoint>,
         private matchers: Mockttp.matchers.RequestMatcher[] = []
     ) {}
 
@@ -47,7 +47,7 @@ export class BalanceRuleBuilder extends SingleValueRuleBuilder {
 
     constructor(
         address: string | undefined,
-        addRuleCallback: (...rules: Mockttp.RequestRuleData[]) => Promise<Mockttp.MockedEndpoint[]>
+        addRuleCallback: (rule: Mockttp.RequestRuleData) => Promise<Mockttp.MockedEndpoint>
     ) {
         if (address) {
             super(addRuleCallback, [new RpcCallMatcher('eth_getBalance', [address])]);
@@ -61,7 +61,7 @@ export class BalanceRuleBuilder extends SingleValueRuleBuilder {
 export class BlockNumberRuleBuilder extends SingleValueRuleBuilder {
 
     constructor(
-        addRuleCallback: (...rules: Mockttp.RequestRuleData[]) => Promise<Mockttp.MockedEndpoint[]>
+        addRuleCallback: (rule: Mockttp.RequestRuleData) => Promise<Mockttp.MockedEndpoint>
     ) {
         super(addRuleCallback, [new RpcCallMatcher('eth_blockNumber')]);
     }
@@ -71,7 +71,7 @@ export class BlockNumberRuleBuilder extends SingleValueRuleBuilder {
 export class GasPriceRuleBuilder extends SingleValueRuleBuilder {
 
     constructor(
-        addRuleCallback: (...rules: Mockttp.RequestRuleData[]) => Promise<Mockttp.MockedEndpoint[]>
+        addRuleCallback: (rule: Mockttp.RequestRuleData) => Promise<Mockttp.MockedEndpoint>
     ) {
         super(addRuleCallback, [new RpcCallMatcher('eth_gasPrice')]);
     }

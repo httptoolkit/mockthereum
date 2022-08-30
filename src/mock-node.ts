@@ -29,48 +29,48 @@ export class MockthereumNode {
 
     private async addBaseRules() {
         await Promise.all([
-            this.mockttpServer.addRequestRules({
+            this.mockttpServer.addRequestRule({
                 matchers: [new RpcCallMatcher('eth_call')],
                 priority: Mockttp.RulePriority.FALLBACK,
                 handler: new RpcErrorResponseHandler(
                     "No Mockthereum rules found matching Ethereum contract call"
                 )
             }),
-            this.mockttpServer.addRequestRules({
+            this.mockttpServer.addRequestRule({
                 matchers: [new RpcCallMatcher('eth_sendTransaction')],
                 priority: Mockttp.RulePriority.FALLBACK,
                 handler: new RpcErrorResponseHandler(
                     "No Mockthereum rules found matching Ethereum transaction"
                 )
             }),
-            this.mockttpServer.addRequestRules({
+            this.mockttpServer.addRequestRule({
                 matchers: [new RpcCallMatcher('eth_sendRawTransaction')],
                 priority: Mockttp.RulePriority.FALLBACK,
                 handler: new RpcErrorResponseHandler(
                     "No Mockthereum rules found matching Ethereum transaction"
                 )
             }),
-            this.mockttpServer.addRequestRules({
+            this.mockttpServer.addRequestRule({
                 matchers: [new RpcCallMatcher('eth_getTransactionReceipt')],
                 priority: Mockttp.RulePriority.FALLBACK,
                 handler: new RpcResponseHandler(null)
             }),
-            this.mockttpServer.addRequestRules({
+            this.mockttpServer.addRequestRule({
                 matchers: [new RpcCallMatcher('eth_getBalance')],
                 priority: Mockttp.RulePriority.FALLBACK,
                 handler: new RpcResponseHandler("0x0")
             }),
-            this.mockttpServer.addRequestRules({
+            this.mockttpServer.addRequestRule({
                 matchers: [new RpcCallMatcher('eth_blockNumber')],
                 priority: Mockttp.RulePriority.FALLBACK,
                 handler: new RpcResponseHandler("0x1")
             }),
-            this.mockttpServer.addRequestRules({
+            this.mockttpServer.addRequestRule({
                 matchers: [new RpcCallMatcher('eth_getBlockByNumber')],
                 priority: Mockttp.RulePriority.FALLBACK,
                 handler: new RpcResponseHandler(null)
             }),
-            this.mockttpServer.addRequestRules({
+            this.mockttpServer.addRequestRule({
                 matchers: [new RpcCallMatcher('eth_gasPrice')],
                 priority: Mockttp.RulePriority.FALLBACK,
                 handler: new RpcResponseHandler(`0x${(1000).toString(16)}`)
@@ -79,17 +79,17 @@ export class MockthereumNode {
     }
 
     forBalance(address?: `0x${string}`) {
-        return new BalanceRuleBuilder(address, this.mockttpServer.addRequestRules);
+        return new BalanceRuleBuilder(address, this.mockttpServer.addRequestRule);
     }
 
     forCall(address?: `0x${string}`) {
-        return new CallRuleBuilder(address, this.mockttpServer.addRequestRules);
+        return new CallRuleBuilder(address, this.mockttpServer.addRequestRule);
     }
 
     forSendTransaction() {
         return new TransactionRuleBuilder(
             undefined,
-            this.mockttpServer.addRequestRules,
+            this.mockttpServer.addRequestRule,
             this.addReceipt.bind(this)
         );
     }
@@ -97,13 +97,13 @@ export class MockthereumNode {
     forSendTransactionTo(address: `0x${string}`) {
         return new TransactionRuleBuilder(
             address,
-            this.mockttpServer.addRequestRules,
+            this.mockttpServer.addRequestRule,
             this.addReceipt.bind(this)
         );
     }
 
     private async addReceipt(id: string, receipt: Partial<RawTransactionReceipt>) {
-        await this.mockttpServer.addRequestRules({
+        await this.mockttpServer.addRequestRule({
             matchers: [new RpcCallMatcher('eth_getTransactionReceipt', [id])],
             handler: new RpcResponseHandler({
                 status: '0x1',
@@ -125,11 +125,11 @@ export class MockthereumNode {
     }
 
     forBlockNumber() {
-        return new BlockNumberRuleBuilder(this.mockttpServer.addRequestRules);
+        return new BlockNumberRuleBuilder(this.mockttpServer.addRequestRule);
     }
 
     forGasPrice() {
-        return new GasPriceRuleBuilder(this.mockttpServer.addRequestRules);
+        return new GasPriceRuleBuilder(this.mockttpServer.addRequestRule);
     }
 
 }
