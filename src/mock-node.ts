@@ -34,7 +34,10 @@ export class MockthereumNode {
         private options: MockthereumOptions = {}
     ) {}
 
+    private seenRequests: Mockttp.CompletedRequest[] = [];
+
     async start() {
+        this.reset();
         await this.mockttpServer.start();
         await this.addBaseRules();
     }
@@ -43,13 +46,20 @@ export class MockthereumNode {
         return this.mockttpServer.stop();
     }
 
+    reset() {
+        this.seenRequests = [];
+        this.mockttpServer.reset();
+    }
+
     get url() {
         return this.mockttpServer.url;
     }
 
     private async addBaseRules() {
-        await Promise.all(
-            (!this.options.unmatchedRequests || this.options.unmatchedRequests === 'stub'
+        await Promise.all([
+            this.mockttpServer.on('request', this.onRequest),
+
+            ...(!this.options.unmatchedRequests || this.options.unmatchedRequests === 'stub'
             ? [
                 this.mockttpServer.addRequestRule({
                     matchers: [new RpcCallMatcher('eth_call')],
@@ -102,8 +112,12 @@ export class MockthereumNode {
                 this.mockttpServer.forUnmatchedRequest()
                     .thenForwardTo(this.options.unmatchedRequests.proxyTo)
             ])
-        );
+        ]);
     }
+
+    private onRequest = (request: Mockttp.CompletedRequest) => {
+        this.seenRequests.push(request);
+    };
 
     forBalance(address?: `0x${string}`) {
         return new BalanceRuleBuilder(address, this.mockttpServer.addRequestRule);
@@ -157,6 +171,24 @@ export class MockthereumNode {
 
     forGasPrice() {
         return new GasPriceRuleBuilder(this.mockttpServer.addRequestRule);
+    }
+
+    getSeenRequests(): Promise<Array<{
+        rawRequest: Mockttp.CompletedRequest;
+        method?: string;
+        params?: any[];
+    }>> {
+        return Promise.all(this.seenRequests.map(async (request) => {
+            return {
+                rawRequest: request,
+                ...(await request.body.getJson())
+            };
+        }));
+    }
+
+    async getSeenMethodCalls(methodName: string) {
+        return (await this.getSeenRequests())
+            .filter(({ method }) => method === methodName);
     }
 
 }

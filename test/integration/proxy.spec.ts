@@ -42,5 +42,18 @@ nodeOnly(() => {
             expect(nodeInfo).to.include("Ganache");
         });
 
+        it("should allow observing forwarded requests", async () => {
+            const web3 = new Web3(mockNode.url);
+
+            await web3.eth.getBalance('0x1230000000000000000000000000000000000000');
+
+            const seenBalanceCalls = await mockNode.getSeenMethodCalls('eth_getBalance');
+            expect(seenBalanceCalls).to.have.lengthOf(1);
+            expect(seenBalanceCalls[0].params).to.deep.equal([
+                '0x1230000000000000000000000000000000000000',
+                'latest'
+            ]);
+        });
+
     });
 });
