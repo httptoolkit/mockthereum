@@ -7,9 +7,12 @@
   "directories": {
     "test": "test"
   },
+  "bin": {
+    "mockthereum": "./dist/admin-bin.js"
+  },
   "scripts": {
     "build": "npm run build:src && npm run build:doc",
-    "build:src": "tsc",
+    "build:src": "tsc && chmod +x ./dist/admin-bin.js",
     "build:doc": "typedoc src/main.ts",
     "pretest": "npm run build",
     "test": "npm run test:node && npm run test:browser",
