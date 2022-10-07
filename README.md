@@ -63,6 +63,10 @@ describe("Mockthereum", () => {
 });
 ```
 
+## API Reference Docs
+
+For more details, see the [Mockthereum reference docs](https://httptoolkit.github.io/mockthereum/).
+
 ---
 
 _This‌ ‌project‌ ‌has‌ ‌received‌ ‌funding‌ ‌from‌ ‌the‌ ‌European‌ ‌Union’s‌ ‌Horizon‌ ‌2020‌‌ research‌ ‌and‌ ‌innovation‌ ‌programme‌ ‌within‌ ‌the‌ ‌framework‌ ‌of‌ ‌the‌ ‌NGI-POINTER‌‌ Project‌ ‌funded‌ ‌under‌ ‌grant‌ ‌agreement‌ ‌No‌ 871528._
