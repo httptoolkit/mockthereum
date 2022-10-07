@@ -13,6 +13,9 @@ class SingleValueRuleBuilder {
         private matchers: Mockttp.matchers.RequestMatcher[] = []
     ) {}
 
+    /**
+     * Successfully return a given value.
+     */
     thenReturn(value: number) {
         return this.addRuleCallback({
             matchers: this.matchers,
@@ -20,6 +23,9 @@ class SingleValueRuleBuilder {
         });
     }
 
+    /**
+     * Fail and return an error message.
+     */
     thenError(message: string) {
         return this.addRuleCallback({
             matchers: this.matchers,
@@ -27,6 +33,11 @@ class SingleValueRuleBuilder {
         });
     }
 
+    /**
+     * Timeout, accepting the request but never returning a response.
+     *
+     * This method completes the rule definition, and returns a promise that resolves once the rule is active.
+     */
     thenTimeout() {
         return this.addRuleCallback({
             matchers: this.matchers,
@@ -34,6 +45,11 @@ class SingleValueRuleBuilder {
         });
     }
 
+    /**
+     * Close the connection immediately after receiving the matching request, without sending any response.
+     *
+     * This method completes the rule definition, and returns a promise that resolves once the rule is active.
+     */
     thenCloseConnection() {
         return this.addRuleCallback({
             matchers: this.matchers,
@@ -43,8 +59,14 @@ class SingleValueRuleBuilder {
 
 }
 
+/**
+ * A rule builder to allow defining rules that mock an Ethereum wallet balance.
+ */
 export class BalanceRuleBuilder extends SingleValueRuleBuilder {
 
+    /**
+     * This builder should not be constructed directly. Call `mockNode.forBalance()` instead.
+     */
     constructor(
         address: string | undefined,
         addRuleCallback: (rule: Mockttp.RequestRuleData) => Promise<Mockttp.MockedEndpoint>
@@ -58,8 +80,14 @@ export class BalanceRuleBuilder extends SingleValueRuleBuilder {
 
 }
 
+/**
+ * A rule builder to allow defining rules that mock the current block number.
+ */
 export class BlockNumberRuleBuilder extends SingleValueRuleBuilder {
 
+    /**
+     * This builder should not be constructed directly. Call `mockNode.forBlockNumber()` instead.
+     */
     constructor(
         addRuleCallback: (rule: Mockttp.RequestRuleData) => Promise<Mockttp.MockedEndpoint>
     ) {
@@ -68,8 +96,14 @@ export class BlockNumberRuleBuilder extends SingleValueRuleBuilder {
 
 }
 
+/**
+ * A rule builder to allow defining rules that mock the current gas price.
+ */
 export class GasPriceRuleBuilder extends SingleValueRuleBuilder {
 
+    /**
+     * This builder should not be constructed directly. Call `mockNode.forGasPrice()` instead.
+     */
     constructor(
         addRuleCallback: (rule: Mockttp.RequestRuleData) => Promise<Mockttp.MockedEndpoint>
     ) {
