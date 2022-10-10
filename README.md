@@ -4,7 +4,15 @@
 
 Mockthereum lets you build a fake Ethereum node, or proxy traffic to a real Ethereum node, to inspect & mock all Ethereum interactions made by any Ethereum client website or application.
 
-## Examples
+---
+
+:warning: _Mockthereum is still new & rapidly developing!_ :warning:
+
+_Everything described here works today, but there's lots more to come, and some advanced use cases may run into rough edges. If you hit any problems or missing features, please [open an issue](https://github.com/httptoolkit/mockthereum/issues/new)._
+
+---
+
+## Example
 
 ```typescript
 import * as Mockthereum from 'mockthereum'
