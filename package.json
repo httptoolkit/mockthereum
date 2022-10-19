@@ -1,6 +1,6 @@
 {
   "name": "mockthereum",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Powerful friendly Ethereum mock node & proxy ",
   "main": "dist/main.js",
   "types": "dist/main.d.ts",
