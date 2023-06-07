@@ -42,7 +42,7 @@
   },
   "homepage": "https://github.com/httptoolkit/mockthereum#readme",
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.0.0"
   },
   "peerDependencies": {
     "mockttp": "^3.1.0"
